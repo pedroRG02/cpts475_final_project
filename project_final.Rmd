@@ -1,0 +1,577 @@
+---
+title: "Project Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(maps)
+library(mapproj)
+library(usmap)
+library(ggplot2)
+library(flexdashboard)
+library(highcharter)
+library(gt)
+library(htmltools)
+library(viridis)
+library(DT)
+library(shiny)
+```
+
+```{r}
+# Importing data
+lungcancer_1 = read.csv("lungcancer_inc_per100k_pop_2015_2019.csv", sep = ",", header = TRUE)
+lungcancer_race = read.csv("lungcancer_inc_per100k_pop_2015_2019_race.csv", sep = ",", header = TRUE)
+lungcancer_gender = read.csv("lungcancer_inc_per100k_pop_2015_2019_gender.csv", sep = ",", header = TRUE)
+livercancer_1 = read.csv("livercancer_inc_per100k_pop_2015_2019.csv", sep = ",", header = TRUE)
+livercancer_race = read.csv("livercancer_inc_per100k_pop_2015_2019_race.csv", sep = ",", header = TRUE)
+livercancer_gender = read.csv("livercancer_inc_per100k_pop_2015_2019_gender.csv", sep = ",", header = TRUE)
+airquality_1 = read.csv("air_quality_pm2.5annualavg_bycounty_2018_2019.csv", sep = ",", header = TRUE)
+arsenic = read.csv("arsenic_annual_mean_conc_2018_2019.csv", sep = ",", header = TRUE)
+drinking = read.csv("binge_drinking_alcohol_adults_per100k_pop_2018_2019.csv", sep = ",", header = TRUE)
+heart_disease = read.csv("coronary_heart_disease_per100k_pop_2018_2019.csv", sep = ",", header = TRUE)
+asthma = read.csv("county_asthma_per100k_pop_2018_2019.csv", sep = ",", header = TRUE)
+no_healthins = read.csv("county_noHealthIns_perc_pop_2018_2019.csv", sep = ",", header = TRUE)
+diabetes = read.csv("diabetes_adults_per100k_pop_2018_2019.csv", sep = ",", header = TRUE)
+obesity = read.csv("obesity_adults_per100k_pop_2018_2019.csv", sep = ",", header = TRUE)
+smoking = read.csv("smoking_adults_per100k_pop_2018_2019.csv", sep = ",", header = TRUE)
+poverty = read.csv("pop_perc_below_poverty_2018_2019.csv", sep = ",", header = TRUE)
+
+# Clean up Data
+livercancer_1 = subset(livercancer_1, select = -c(Data.Comment,X))
+names(livercancer_1) <- tolower(names(livercancer_1))
+names(livercancer_1)[names(livercancer_1) == 'countyfips'] <- 'fips'
+
+livercancer_race = subset(livercancer_race, select = -c(Data.Comment))
+names(livercancer_race)[names(livercancer_race) == 'CountyFIPS'] <- 'fips'
+
+livercancer_racewhite <- c("White (includes Hispanic)")
+livercancer_racewhite1 <- filter(livercancer_race, Race.Ethnicity %in% livercancer_racewhite)
+
+livercancer_raceblack <- c("Black (includes Hispanic)")
+livercancer_raceblack1 <- filter(livercancer_race, Race.Ethnicity %in% livercancer_raceblack)
+
+livercancer_raceasian <- c("Asian/Pacific Islander (includes Hispanic)")
+livercancer_raceasian1 <- filter(livercancer_race, Race.Ethnicity %in% livercancer_raceasian)
+
+livercancer_raceindian <- c("American Indian/Alaskan Native (includes Hispanic)")
+livercancer_raceindian1 <- filter(livercancer_race, Race.Ethnicity %in% livercancer_raceindian)
+
+livercancer_gender = subset(livercancer_gender, select = -c(Data.Comment))
+names(livercancer_gender)[names(livercancer_gender) == 'CountyFIPS'] <- 'fips'
+
+livercancer_gendermale <- c("Male")
+livercancer_gendermale1 <- filter(livercancer_gender, Gender %in% livercancer_gendermale)
+
+livercancer_genderfemale <- c("Female")
+livercancer_genderfemale1 <- filter(livercancer_gender, Gender %in% livercancer_genderfemale)
+
+lungcancer_1 = subset(lungcancer_1, select = -c(Data.Comment,X))
+names(lungcancer_1)[names(lungcancer_1) == 'CountyFIPS'] <- 'fips'
+
+lungcancer_race = subset(lungcancer_race, select = -c(Data.Comment))
+names(lungcancer_race)[names(lungcancer_race) == 'CountyFIPS'] <- 'fips'
+
+lungcancer_racewhite <- c("White (includes Hispanic)")
+lungcancer_racewhite1 <- filter(lungcancer_race, Race.Ethnicity %in% lungcancer_racewhite)
+
+lungcancer_raceblack <- c("Black (includes Hispanic)")
+lungcancer_raceblack1 <- filter(lungcancer_race, Race.Ethnicity %in% lungcancer_raceblack)
+
+lungcancer_raceasian <- c("Asian/Pacific Islander (includes Hispanic)")
+lungcancer_raceasian1 <- filter(lungcancer_race, Race.Ethnicity %in% lungcancer_raceasian)
+
+lungcancer_raceindian <- c("American Indian/Alaskan Native (includes Hispanic)")
+lungcancer_raceindian1 <- filter(lungcancer_race, Race.Ethnicity %in% livercancer_raceindian)
+
+lungcancer_gender = subset(lungcancer_gender, select = -c(Data.Comment))
+names(lungcancer_gender)[names(lungcancer_gender) == 'CountyFIPS'] <- 'fips'
+
+lungcancer_gendermale <- c("Male")
+lungcancer_gendermale1 <- filter(lungcancer_gender, Gender %in% lungcancer_gendermale)
+
+lungcancer_genderfemale <- c("Female")
+lungcancer_genderfemale1 <- filter(lungcancer_gender, Gender %in% lungcancer_genderfemale)
+
+airquality_1 = subset(airquality_1, select = -c(Data.Comment,X))
+names(airquality_1)[names(airquality_1) == 'CountyFIPS'] <- 'fips'
+
+arsenic = subset(arsenic, select = -c(Data.Comment))
+names(arsenic)[names(arsenic) == 'CountyFIPS'] <- 'fips'
+
+drinking = subset(drinking, select = -c(Data.Comment, X))
+names(drinking)[names(drinking) == 'CountyFIPS'] <- 'fips'
+
+heart_disease = subset(heart_disease, select = -c(Data.Comment, X))
+names(heart_disease)[names(heart_disease) == 'CountyFIPS'] <- 'fips'
+
+asthma = subset(asthma, select = -c(Data.Comment, X))
+names(asthma)[names(asthma) == 'CountyFIPS'] <- 'fips'
+
+no_healthins = subset(no_healthins, select = -c(Data.Comment, X))
+names(no_healthins)[names(no_healthins) == 'CountyFIPS'] <- 'fips'
+
+diabetes = subset(diabetes, select = -c(Data.Comment, X))
+names(diabetes)[names(diabetes) == 'CountyFIPS'] <- 'fips'
+
+obesity = subset(obesity, select = -c(Data.Comment, X))
+names(obesity)[names(obesity) == 'CountyFIPS'] <- 'fips'
+
+smoking = subset(smoking, select = -c(Data.Comment, X))
+names(smoking)[names(smoking) == 'CountyFIPS'] <- 'fips'
+
+poverty = subset(poverty, select = -c(Data.Comment, X))
+names(poverty)[names(poverty) == 'CountyFIPS'] <- 'fips'
+
+```
+
+Liver Cancer
+=======================================================================
+
+Column {.tabset .tabset-fade data-width=650}
+-----------------------------------------------------------------------
+
+### US Map
+
+```{r}
+livercancer_pt1 <- livercancer_1[, c("fips", "value")]
+livercancer_pt1$value <- as.numeric(livercancer_pt1$value)
+plot_usmap(regions = "counties", data = livercancer_pt1, values = "value") +
+  scale_fill_gradient(low = "white", high = "red", name = "Incidence Rates") +
+  labs(title = "US Counties of Liver Cancer rates") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Data by County
+
+```{r}
+livercancer_pt2 <- livercancer_1[, c("state", "county", "value")] 
+datatable(livercancer_pt2, rownames = FALSE, options = list(pageLength =10) )
+```
+
+
+Liver Cancer: Race
+=======================================================================
+
+Column {.tabset .tabset-fade data-width=650}
+-----------------------------------------------------------------------
+
+### US Map Containting Race: White
+
+```{r}
+livercancer_racewhite2 <- livercancer_racewhite1[, c("fips", "Value")]
+livercancer_racewhite2$Value <- as.numeric(livercancer_racewhite2$Value)
+plot_usmap(regions = "counties", data = livercancer_racewhite2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "red", name = "Incidence Rates") +
+  labs(title = "US Counties of Liver Cancer rates Of Race: White") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map Containing Race: Black
+
+```{r}
+livercancer_raceblack2 <- livercancer_raceblack1[, c("fips", "Value")]
+livercancer_raceblack2$Value <- as.numeric(livercancer_raceblack2$Value)
+plot_usmap(regions = "counties", data = livercancer_raceblack2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "red", name = "Incidence Rates") +
+  labs(title = "US Counties of Liver Cancer rates Of Race: Black") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map Containing Race: Asian/Pacific Islander
+
+```{r}
+livercancer_raceasian2 <- livercancer_raceasian1[, c("fips", "Value")]
+livercancer_raceasian2$Value <- as.numeric(livercancer_raceasian2$Value)
+plot_usmap(regions = "counties", data = livercancer_raceasian2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "red", name = "Incidence Rates") +
+  labs(title = "US Counties of Liver Cancer rates Of Race: Asian/Pacific Islander") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map Containing Race: American Indian/Alaskan Native
+
+```{r}
+livercancer_raceindian2 <- livercancer_raceindian1[, c("fips", "Value")]
+livercancer_raceindian2$Value <- as.numeric(livercancer_raceindian2$Value)
+plot_usmap(regions = "counties", data = livercancer_raceindian2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "red", name = "Incidence Rates") +
+  labs(title = "US Counties of Liver Cancer rates Of Race: American Indian/Alaskan Native") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Data by Race Ethnicity
+
+```{r}
+livercancer_racept2 <- livercancer_race[, c("State", "County", "Value", "Race.Ethnicity")] 
+datatable(livercancer_racept2, rownames = FALSE, options = list(pageLength =10) )
+  
+```
+
+Liver Cancer: Gender
+=======================================================================
+
+Column {.tabset .tabset-fade data-width=650}
+-----------------------------------------------------------------------
+
+### US Map Containing Gender: Male
+
+```{r}
+livercancer_gendermale2 <- livercancer_gendermale1[, c("fips", "Value")]
+livercancer_gendermale2$Value <- as.numeric(livercancer_gendermale2$Value)
+plot_usmap(regions = "counties", data = livercancer_gendermale2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "red", name = "Incidence Rates") +
+  labs(title = "US Counties of Liver Cancer rates Of Gender: Male") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map Containing Gender: Female
+
+```{r}
+livercancer_genderfemale2 <- livercancer_genderfemale1[, c("fips", "Value")]
+livercancer_genderfemale2$Value <- as.numeric(livercancer_genderfemale2$Value)
+plot_usmap(regions = "counties", data = livercancer_genderfemale2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "red", name = "Incidence Rates") +
+  labs(title = "US Counties of Liver Cancer rates Of Gender: Female") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Data By Gender
+
+```{r}
+livercancer_gender2 <- livercancer_gender[, c("State", "County", "Value", "Gender")] 
+datatable(livercancer_gender2, rownames = FALSE, options = list(pageLength =10) )
+
+```
+
+
+Lung Cancer
+=======================================================================
+
+Column {.tabset .tabset-fade data-width=650}
+-----------------------------------------------------------------------
+
+### US Map
+
+```{r}
+lungcancer_pt1 <- lungcancer_1[, c("fips", "Value")]
+lungcancer_pt1$Value <- as.numeric(lungcancer_pt1$Value)
+plot_usmap(regions = "counties", data = lungcancer_pt1, values = "Value") +
+  scale_fill_gradient(low = "white", high = "green", name = "Incidence Rates Of Lung Cancer") +
+  labs(title = "US Counties of Lung Cancer rates") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Data by County
+
+```{r}
+lungcancer_pt2 <- lungcancer_1[, c("State", "County", "Value")] 
+datatable(lungcancer_pt2, rownames = FALSE, options = list(pageLength =10) )
+```
+
+
+Lung Cancer: Race
+=======================================================================
+
+Column {.tabset .tabset-fade data-width=650}
+-----------------------------------------------------------------------
+
+### US Map Containting Race: White
+
+```{r}
+lungcancer_racewhite2 <- lungcancer_racewhite1[, c("fips", "Value")]
+lungcancer_racewhite2$Value <- as.numeric(lungcancer_racewhite2$Value)
+plot_usmap(regions = "counties", data = lungcancer_racewhite2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "green", name = "Incidence Rates") +
+  labs(title = "US Counties of Lung Cancer rates Of Race: White") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map Containing Race: Black
+
+```{r}
+lungcancer_raceblack2 <- lungcancer_raceblack1[, c("fips", "Value")]
+lungcancer_raceblack2$Value <- as.numeric(lungcancer_raceblack2$Value)
+plot_usmap(regions = "counties", data = lungcancer_raceblack2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "green", name = "Incidence Rates") +
+  labs(title = "US Counties of Lung Cancer rates Of Race: Black") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map Containing Race: Asian/Pacific Islander
+
+```{r}
+lungcancer_raceasian2 <- lungcancer_raceasian1[, c("fips", "Value")]
+lungcancer_raceasian2$Value <- as.numeric(lungcancer_raceasian2$Value)
+plot_usmap(regions = "counties", data = lungcancer_raceasian2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "green", name = "Incidence Rates") +
+  labs(title = "US Counties of Lung Cancer rates Of Race: Asian/Pacific Islander") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map Containing Race: American Indian/Alaskan Native
+
+```{r}
+lungcancer_raceindian2 <- lungcancer_raceindian1[, c("fips", "Value")]
+lungcancer_raceindian2$Value <- as.numeric(lungcancer_raceindian2$Value)
+plot_usmap(regions = "counties", data = lungcancer_raceindian2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "green", name = "Incidence Rates") +
+  labs(title = "US Counties of Lung Cancer rates Of Race: American Indian/Alaskan Native") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Data by Race Ethnicity
+
+```{r}
+lungcancer_racept2 <- lungcancer_race[, c("State", "County", "Value", "Race.Ethnicity")] 
+datatable(lungcancer_racept2, rownames = FALSE, options = list(pageLength =10) )
+  
+```
+
+Lung Cancer: Gender
+=======================================================================
+
+Column {.tabset .tabset-fade data-width=650}
+-----------------------------------------------------------------------
+
+### US Map Containing Gender: Male
+
+```{r}
+lungcancer_gendermale2 <- lungcancer_gendermale1[, c("fips", "Value")]
+lungcancer_gendermale2$Value <- as.numeric(lungcancer_gendermale2$Value)
+plot_usmap(regions = "counties", data = lungcancer_gendermale2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "green", name = "Incidence Rates") +
+  labs(title = "US Counties of Lung Cancer rates Of Gender: Male") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map Containing Gender: Female
+
+```{r}
+lungcancer_genderfemale2 <- lungcancer_genderfemale1[, c("fips", "Value")]
+lungcancer_genderfemale2$Value <- as.numeric(lungcancer_genderfemale2$Value)
+plot_usmap(regions = "counties", data = lungcancer_genderfemale2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "green", name = "Incidence Rates") +
+  labs(title = "US Counties of Lung Cancer rates Of Gender: Female") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Data By Gender
+
+```{r}
+lungcancer_gender2 <- lungcancer_gender[, c("State", "County", "Value", "Gender")] 
+datatable(lungcancer_gender2, rownames = FALSE, options = list(pageLength =10) )
+
+```
+
+Factors
+=======================================================================
+
+Column {.tabset .tabset-fade data-width=650}
+-----------------------------------------------------------------------
+
+### Airquality
+
+```{r}
+airquality2 <- airquality_1[, c("State", "County", "Value", "Year")] 
+datatable(airquality2, rownames = FALSE, options = list(pageLength =10) )
+```
+
+### Arsenic
+
+```{r}
+arsenic1 <- arsenic[, c("State", "County", "Value", "Year")] 
+datatable(arsenic1, rownames = FALSE, options = list(pageLength =10) )
+```
+
+### Drinking
+
+```{r}
+drinking1 <- drinking[, c("State", "County", "Value", "Year")] 
+datatable(drinking1, rownames = FALSE, options = list(pageLength =10) )
+```
+
+### Heart Disease
+
+```{r}
+heart_disease1 <- heart_disease[, c("State", "County", "Value", "Year")] 
+datatable(heart_disease1, rownames = FALSE, options = list(pageLength =10) )
+```
+
+### Asthma
+
+```{r}
+asthma1 <- asthma[, c("State", "County", "Value", "Year")] 
+datatable(asthma1, rownames = FALSE, options = list(pageLength =10) )
+```
+
+### Health Insurance
+
+```{r}
+no_healthins1 <- no_healthins[, c("State", "County", "Value", "Year")] 
+datatable(no_healthins1, rownames = FALSE, options = list(pageLength =10) )
+```
+
+### Diabetes
+
+```{r}
+diabetes1 <- diabetes[, c("State", "County", "Value", "Year")] 
+datatable(diabetes1, rownames = FALSE, options = list(pageLength =10) )
+```
+
+### Obesity
+
+```{r}
+obesity1 <- obesity[, c("State", "County", "Value", "Year")] 
+datatable(obesity1, rownames = FALSE, options = list(pageLength =10) )
+```
+
+### Smoking
+
+```{r}
+smoking1 <- smoking[, c("State", "County", "Value", "Year")] 
+datatable(smoking1, rownames = FALSE, options = list(pageLength =10) )
+```
+
+### Poverty
+
+```{r}
+poverty1 <- poverty[, c("State", "County", "Value", "Year")] 
+datatable(poverty1, rownames = FALSE, options = list(pageLength =10) )
+```
+
+Column {.tabset .tabset-fade data-width=350}
+-----------------------------------------------------------------------
+
+### US Map of Airquality
+
+```{r}
+airquality3 <- airquality_1[, c("fips", "Value")]
+airquality3$Value <- as.numeric(airquality3$Value)
+plot_usmap(regions = "counties", data = airquality3, values = "Value") +
+  scale_fill_gradient(low = "white", high = "gold", name = "Incidence Rates") +
+  labs(title = "US Counties Levels of Airquality") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map of Arsenic
+
+```{r}
+arsenic2 <- arsenic[, c("fips", "Value")]
+arsenic2$Value <- as.numeric(arsenic2$Value)
+plot_usmap(regions = "counties", data = arsenic2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "gold", name = "Incidence Rates") +
+  labs(title = "US Counties Levels of Arsenic") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map of Drinking
+
+```{r}
+drinking2 <- drinking[, c("fips", "Value")]
+drinking2$Value <- as.numeric(drinking2$Value)
+plot_usmap(regions = "counties", data = drinking2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "gold", name = "Incidence Rates") +
+  labs(title = "US Counties Levels of Drinking") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map of Heart Disease
+
+```{r}
+hd <- heart_disease[, c("fips", "Value")]
+hd$Value <- as.numeric(hd$Value)
+plot_usmap(regions = "counties", data = hd, values = "Value") +
+  scale_fill_gradient(low = "white", high = "gold", name = "Incidence Rates") +
+  labs(title = "US Counties Levels of Heart Disease") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map of Asthma
+
+```{r}
+asthma2 <- asthma[, c("fips", "Value")]
+asthma2$Value <- as.numeric(asthma2$Value)
+plot_usmap(regions = "counties", data = asthma2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "gold", name = "Incidence Rates") +
+  labs(title = "US Counties Levels of Asthma") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map of Health Insurance
+
+```{r}
+hi2 <- no_healthins[, c("fips", "Value")]
+hi2$Value <- as.numeric(hi2$Value)
+plot_usmap(regions = "counties", data = hi2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "gold", name = "Incidence Rates") +
+  labs(title = "US Counties With Health Insurance") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map of Diabetes
+
+```{r}
+diabetes2 <- diabetes[, c("fips", "Value")]
+diabetes2$Value <- as.numeric(diabetes2$Value)
+plot_usmap(regions = "counties", data = diabetes2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "gold", name = "Incidence Rates") +
+  labs(title = "US Counties Levels of Diabetes") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map of Obesity
+
+```{r}
+obesity2 <- obesity[, c("fips", "Value")]
+obesity2$Value <- as.numeric(obesity2$Value)
+plot_usmap(regions = "counties", data = obesity2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "gold", name = "Incidence Rates") +
+  labs(title = "US Counties Levels of Obesity") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+### US Map of Smoking
+
+```{r}
+smoking2 <- smoking[, c("fips", "Value")]
+smoking2$Value <- as.numeric(smoking2$Value)
+plot_usmap(regions = "counties", data = smoking2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "gold", name = "Incidence Rates") +
+  labs(title = "US Counties Levels of Smoking") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
+
+### US Map of Poverty
+
+```{r}
+poverty2 <- poverty[, c("fips", "Value")]
+poverty2$Value <- as.numeric(poverty2$Value)
+plot_usmap(regions = "counties", data = poverty2, values = "Value") +
+  scale_fill_gradient(low = "white", high = "gold", name = "Incidence Rates") +
+  labs(title = "US Counties Levels of Poverty") +
+  theme(panel.background = element_rect(color = "black", fill = "lightblue"), legend.position = "right")
+```
+
